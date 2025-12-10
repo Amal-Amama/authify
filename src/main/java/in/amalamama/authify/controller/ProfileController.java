@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.*;
 public class ProfileController {
     private final ProfileService profileService;
 
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ProfileResponse register(@RequestBody ProfileRequest request){
-        ProfileResponse response=profileService.createProfile(request);
-    }
+   // @PostMapping("/register")
+   // @ResponseStatus(HttpStatus.CREATED)
+   // public ProfileResponse register(@RequestBody ProfileRequest request){
+   //     ProfileResponse response=profileService.createProfile(request);
+    //}
 }
