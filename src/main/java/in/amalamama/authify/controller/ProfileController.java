@@ -3,6 +3,7 @@ package in.amalamama.authify.controller;
 import in.amalamama.authify.io.ProfileRequest;
 import in.amalamama.authify.io.ProfileResponse;
 import in.amalamama.authify.service.ProfileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,9 +14,10 @@ import org.springframework.web.bind.annotation.*;
 public class ProfileController {
     private final ProfileService profileService;
 
-   // @PostMapping("/register")
-   // @ResponseStatus(HttpStatus.CREATED)
-   // public ProfileResponse register(@RequestBody ProfileRequest request){
-   //     ProfileResponse response=profileService.createProfile(request);
-    //}
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProfileResponse register(@Valid @RequestBody ProfileRequest request){
+      ProfileResponse response=profileService.createProfile(request);
+      return response;
+    }
 }

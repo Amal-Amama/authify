@@ -5,7 +5,9 @@ import in.amalamama.authify.io.ProfileRequest;
 import in.amalamama.authify.io.ProfileResponse;
 import in.amalamama.authify.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -17,8 +19,8 @@ public class ProfileServiceImpl implements ProfileService{
     @Override
     public ProfileResponse createProfile(ProfileRequest request) {
         UserEntity newProfile=convertToEntity(request);
-        if (userRepository.findByEmail(newProfile.getEmail()).isPresent()) {
-            throw new RuntimeException("User already exists with email " + newProfile.getEmail());
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"User already exists with email " + newProfile.getEmail());
         }
         newProfile= userRepository.save(newProfile);
         return convertToProfileResponse(newProfile);
@@ -46,3 +48,4 @@ public class ProfileServiceImpl implements ProfileService{
                 .build();
     }
 }
+
