@@ -2,29 +2,50 @@ package in.amalamama.authify.controller;
 
 
 import in.amalamama.authify.io.AuthRequest;
+import in.amalamama.authify.io.AuthResponse;
+import in.amalamama.authify.service.CustomUserDetailsService;
+import in.amalamama.authify.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
-    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager; //we use it to check credentials (email + password).
+    private final CustomUserDetailsService customUserDetailsService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request){
         try{
             authenticate(request.getEmail(),request.getPassword());
             //send jwt token inside a cookie (cause we want to send it securely)
+            final UserDetails userDetails=customUserDetailsService.loadUserByUsername(request.getEmail());
+            final String jwtToken=jwtUtil.generateToken(userDetails);
+            //create a cookie with the jwttoken
+            ResponseCookie cookie=ResponseCookie.from("jwt",jwtToken)
+                    .httpOnly(true)
+                    .path("/")
+                    .maxAge(Duration.ofDays(1))
+                    .sameSite("Strict")
+                    .build();
+            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE).body(new AuthResponse(request.getEmail(),jwtToken));
         }catch(BadCredentialsException e){
             Map<String,Object> error=new HashMap<>();
             error.put("error",true);
@@ -41,6 +62,7 @@ public class AuthController {
             error.put("message","Authentication failed");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
+
     }
 
     private void authenticate(String email, String password) {
