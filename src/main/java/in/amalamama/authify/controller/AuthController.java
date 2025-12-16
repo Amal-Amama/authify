@@ -6,7 +6,6 @@ import in.amalamama.authify.io.AuthResponse;
 import in.amalamama.authify.service.CustomUserDetailsService;
 import in.amalamama.authify.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -45,7 +44,7 @@ public class AuthController {
                     .maxAge(Duration.ofDays(1))
                     .sameSite("Strict")
                     .build();
-            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE).body(new AuthResponse(request.getEmail(),jwtToken));
+            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(new AuthResponse(request.getEmail(),jwtToken));
         }catch(BadCredentialsException e){
             Map<String,Object> error=new HashMap<>();
             error.put("error",true);

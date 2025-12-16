@@ -1,5 +1,6 @@
 package in.amalamama.authify.config;
 
+import in.amalamama.authify.filter.JwtRequestFilter;
 import in.amalamama.authify.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,7 +28,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
-    private final PasswordEncoder passwordEncoder;
+    private final JwtRequestFilter jwtRequestFilter;
+    private final CustomAuthEntryPoint customAuthEntryPoint;
 
     // This defines the main security rules for HTTP requests
     //This bean controls EVERYTHING about HTTP security
@@ -44,11 +47,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // The following endpoints can be accessed without login
                         .requestMatchers(
-                                "/login",
-                                "/register",
-                                "/send-reset-otp",
-                                "/reset-password",
-                                "/logout")
+                               "/register","/login")
                         .permitAll()
 
                         // All other endpoints require authentication
@@ -59,7 +58,11 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // Disable the default logout endpoint provided by Spring Security
-                .logout(AbstractHttpConfigurer::disable);
+                .logout(AbstractHttpConfigurer::disable)
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                 //the global exception created
+                .exceptionHandling(ex->
+                        ex.authenticationEntryPoint(customAuthEntryPoint));
 
         // Build and return the security filter chain
         return http.build();
@@ -120,7 +123,7 @@ public class SecurityConfig {
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(customUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
+        provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
     //DaoAuthenticationProvider is responsible for.
