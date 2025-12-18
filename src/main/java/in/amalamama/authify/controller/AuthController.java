@@ -5,6 +5,7 @@ import in.amalamama.authify.io.AuthRequest;
 import in.amalamama.authify.io.AuthResponse;
 import in.amalamama.authify.service.CustomUserDetailsService;
 import in.amalamama.authify.util.JwtUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ public class AuthController {
     private final CustomUserDetailsService customUserDetailsService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request){
+    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest request){
         try{
             authenticate(request.getEmail(),request.getPassword());
             //send jwt token inside a cookie (cause we want to send it securely)
@@ -61,10 +62,11 @@ public class AuthController {
             error.put("message","Authentication failed");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
-
     }
 
     private void authenticate(String email, String password) {
         authenticationManager.authenticate((new UsernamePasswordAuthenticationToken(email,password)));
     }
+    //UsernamePasswordAuthenticationToken = "Here’s the user’s email and password"
+    //authenticationManager.authenticate() = "Spring Security, please check if this user is valid"
 }

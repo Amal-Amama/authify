@@ -37,17 +37,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Enable CORS with default settings (we customize it later)
+                // Enable CORS with default settings (allows * to communicate with back) if no corsConfigurationSource cos provided
                 .cors(Customizer.withDefaults())
 
                 // Disable CSRF protection, because we are using stateless JWT tokens
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable) //also this works:csrf -> csrf.disable()
 
                 // Define which endpoints are public and which require authentication
                 .authorizeHttpRequests(auth -> auth
                         // The following endpoints can be accessed without login
                         .requestMatchers(
-                               "/register","/login")
+                                "/login",
+                                "/register",
+                                "/send-reset-otp",
+                                "/reset-password",
+                                "/logout")
                         .permitAll()
 
                         // All other endpoints require authentication
@@ -59,6 +63,8 @@ public class SecurityConfig {
 
                 // Disable the default logout endpoint provided by Spring Security
                 .logout(AbstractHttpConfigurer::disable)
+                //“Run my JWT filter before Spring’s default login filter,
+                // so that the user is authenticated from the token before any security checks.”
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                  //the global exception created
                 .exceptionHandling(ex->
@@ -131,4 +137,13 @@ public class SecurityConfig {
     //Comparing passwords
     //Checking account status (enabled/locked/expired)
     //If anything fails, DaoAuthenticationProvider throws a subclass of AuthenticationException.
+
+    //3️⃣ Flow summary
+    //Client sends POST /login with email + password
+    //Controller calls authenticationManager.authenticate(...)
+    //ProviderManager delegates to DaoAuthenticationProvider
+    //CustomUserDetailsService loads user from DB
+    //Password is verified using BCryptPasswordEncoder
+    ////Authentication succeeds → JWT token returned
+    //Future requests: JWT token → jwtRequestFilter sets authentication in SecurityContext
 }

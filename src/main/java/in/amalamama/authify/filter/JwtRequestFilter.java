@@ -18,7 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-
+//This filter will intercept every incoming HTTP request and check if the user has a valid JWT.
 @Component
 @RequiredArgsConstructor
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -53,7 +53,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             Cookie[] cookies=request.getCookies();
             if(cookies!=null){
                 for(Cookie cookie:cookies){
-                    if("jwt".equals(cookie.getName())){
+                    if("jwt".equals(cookie.getName())){//looks for a cookie named jwt
                         jwt=cookie.getValue();
                         break;
                     }
