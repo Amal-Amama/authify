@@ -3,7 +3,9 @@ package in.amalamama.authify.controller;
 
 import in.amalamama.authify.io.AuthRequest;
 import in.amalamama.authify.io.AuthResponse;
+import in.amalamama.authify.io.ResetPasswordRequest;
 import in.amalamama.authify.service.CustomUserDetailsService;
+import in.amalamama.authify.service.ProfileService;
 import in.amalamama.authify.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +17,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -30,6 +32,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager; //we use it to check credentials (email + password).
     private final CustomUserDetailsService customUserDetailsService;
+    private final ProfileService profileService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequest request){
@@ -69,4 +72,28 @@ public class AuthController {
     }
     //UsernamePasswordAuthenticationToken = "Here’s the user’s email and password"
     //authenticationManager.authenticate() = "Spring Security, please check if this user is valid"
+
+    @GetMapping("/is-authenticated")
+    public ResponseEntity<Boolean> isAuthenticated(@CurrentSecurityContext(expression="authentication?.name") String email){
+        return ResponseEntity.ok(email!=null);
+    }
+
+    @PostMapping("/send-reset-otp")
+    public void sendResetOtp(@RequestParam String email){
+        try{
+            profileService.sendResetOtp(email);
+        }catch(Exception e){
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,e.getMessage());
+        }
+    }
+    @PostMapping("/reset-password")
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request){
+        try{
+            profileService.resetPassword(request.getEmail(), request.getOtp(), request.getNewPassword());
+        }catch(Exception e){
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,e.getMessage());
+        }
+
+    }
+
 }
